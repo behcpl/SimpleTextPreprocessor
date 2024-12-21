@@ -1,0 +1,14 @@
+# JetBrains
+.idea/
+
+# VisualStudio
+.vs/
+
+# User-specific files
+*.user
+
+# C# build artifacts
+bin/
+obj/
+nupkg/
+publish/

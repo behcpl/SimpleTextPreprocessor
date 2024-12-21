@@ -1,0 +1,4 @@
+﻿include 1
+include 2
+#include "../other.txt"
+include 3

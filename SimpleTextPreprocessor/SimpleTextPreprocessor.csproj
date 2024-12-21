@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>0.1.0</Version>
+        <Authors>Bartosz Czuba</Authors>
+        <Copyright>BEHC 2024</Copyright>
+        <PackageLicenseUrl>https://github.com/behcpl/SimpleTextPreprocessor?tab=MIT-1-ov-file</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/behcpl/SimpleTextPreprocessor</RepositoryUrl>
+        <Company>BEHC</Company>
+    </PropertyGroup>
+
+</Project>

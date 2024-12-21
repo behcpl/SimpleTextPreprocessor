@@ -1,0 +1,6 @@
+﻿line 1
+#include "SubFolder/include.txt"
+line 2
+line 3
+#include "other.txt"
+line 4
