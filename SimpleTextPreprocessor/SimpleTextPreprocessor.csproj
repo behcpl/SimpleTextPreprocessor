@@ -7,9 +7,17 @@
         <Version>0.1.0</Version>
         <Authors>Bartosz Czuba</Authors>
         <Copyright>BEHC 2024</Copyright>
-        <PackageLicenseUrl>https://github.com/behcpl/SimpleTextPreprocessor?tab=MIT-1-ov-file</PackageLicenseUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/behcpl/SimpleTextPreprocessor</RepositoryUrl>
         <Company>BEHC</Company>
+        <PackageId>BEHC.SimpleTextPreprocessor</PackageId>
+        <Description>Text preprocessor like one with C/C++ but with basic expression support.</Description>
+        <PackageTags>text, processing</PackageTags>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
 </Project>
