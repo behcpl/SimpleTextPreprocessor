@@ -36,7 +36,7 @@ public class IncludeTests
     [Test]
     public void Include_replaced_with_text()
     {
-        Preprocessor preprocessor = new Preprocessor(new StringIncludeResolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new StringIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
 
         using TextReader source = new StringReader(_SOURCE);
 
