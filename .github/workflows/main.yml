@@ -18,10 +18,10 @@ jobs:
       run: dotnet restore ./SimpleTextPreprocessor/SimpleTextPreprocessor.csproj
 
     - name: Build
-      run: dotnet restore ./SimpleTextPreprocessor/SimpleTextPreprocessor.csproj --configuration Release --no-restore
+      run: dotnet build ./SimpleTextPreprocessor/SimpleTextPreprocessor.csproj --configuration Release --no-restore
 
     - name: Pack
       run: dotnet pack ./SimpleTextPreprocessor/SimpleTextPreprocessor.csproj --no-restore
 
     - name: Deploy to Nuget
-      run: dotnet nuget push ./SimpleTextPreprocessor/bin/Release/BEHC.SimpleTextPreprocessor.0.1.0.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
+      run: dotnet nuget push ./SimpleTextPreprocessor/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
