@@ -9,7 +9,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        Preprocessor preprocessor = new Preprocessor(new IncludeResolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new IncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
 
         using TextReader source = new StreamReader("./ExampleData/example.txt");
 

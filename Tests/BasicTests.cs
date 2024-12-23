@@ -35,14 +35,14 @@ public class BasicTests
 
                                          """;
 
-    public static IEnumerable<TestCaseData> TestCases()
+    private static IEnumerable<TestCaseData> TestCases()
     {
         yield return new TestCaseData(_PURE_TEXT_WITH_ENDL, _PURE_TEXT_WITH_ENDL).SetName("Copy simple text");
         yield return new TestCaseData(_UNKNOWN_DIRECTIVES, _KEEP_VERSION).SetName("Strip unknown directives, keep ignored");
     }
 
     [TestCaseSource(nameof(TestCases))]
-    public void DoTests(string sourceText, string expectedText)
+    public void Handle_basic_cases(string sourceText, string expectedText)
     {
         Preprocessor preprocessor = new Preprocessor();
         preprocessor.Ignore("version");
@@ -53,8 +53,9 @@ public class BasicTests
         using TextWriter result = new StringWriter(sb);
         result.NewLine = "\r\n";
 
-        preprocessor.Process(source, result);
+        bool ret = preprocessor.Process(source, result);
 
+        Assert.That(ret, Is.True);
         Assert.That(sb.ToString(), Is.EqualTo(expectedText));
     }
 }

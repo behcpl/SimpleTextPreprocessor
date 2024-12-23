@@ -44,8 +44,9 @@ public class IncludeTests
         using TextWriter result = new StringWriter(sb);
         result.NewLine = "\r\n";
 
-        preprocessor.Process(source, result);
+        bool ret = preprocessor.Process(source, result);
 
+        Assert.That(ret, Is.True);
         Assert.That(sb.ToString(), Is.EqualTo(_EXPECTED));
     }
 

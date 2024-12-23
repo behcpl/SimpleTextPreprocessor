@@ -19,12 +19,14 @@ public class Preprocessor
     private readonly HashSet<string> _ignored;
     private readonly Dictionary<string, string?> _symbols;
     private readonly char _directiveChar;
+    public readonly bool _breakOnFirstError;
 
     public Preprocessor(IIncludeResolver includeResolver, IExpressionSolver expressionSolver, PreprocessorOptions options)
     {
         _includeResolver = includeResolver;
         _expressionSolver = expressionSolver;
-        _directiveChar = options.SpecialChar;
+        _directiveChar = options.DirectiveChar;
+        _breakOnFirstError = options.BreakOnFirstError;
         _ignored = new HashSet<string>();
         _symbols = new Dictionary<string, string?>();
     }
@@ -46,94 +48,170 @@ public class Preprocessor
         _symbols.Remove(symbol);
     }
 
-    public void Process(TextReader reader, TextWriter writer)
+    public bool Process(TextReader reader, TextWriter writer, IReport? report = null)
     {
         Dictionary<string, string?> symbols = new(_symbols);
 
-        ProcessSection(symbols, reader, writer);
+        return ProcessSection(symbols, reader, writer, report);
     }
 
-    private void ProcessSection(Dictionary<string, string?> symbols, TextReader reader, TextWriter writer)
+    private bool ProcessSection(Dictionary<string, string?> symbols, TextReader reader, TextWriter writer, IReport? report)
     {
-        SectionState state = new();
+        List<BlockState> sectionState = [];
 
+        bool valid = true;
+        int lineNumber = 0;
         string? line = reader.ReadLine();
         while (line != null)
         {
-            if (HandleLine(ref state, symbols, line, writer))
-            {
+            bool success = ProcessLine(out bool outputLine, sectionState, symbols, line, lineNumber, writer, report);
+            if (outputLine)
                 writer.WriteLine(line);
+
+            if (!success)
+            {
+                valid = false;
+                if (_breakOnFirstError)
+                    return false;
             }
 
+            lineNumber++;
             line = reader.ReadLine();
         }
+
+        if (sectionState.Count > 0)
+        {
+            report?.Error(-1, string.Empty, lineNumber, 0, "Unexpected end of file!");
+            return false;
+        }
+
+        return valid;
     }
 
-    private bool HandleLine(ref SectionState state, Dictionary<string, string?> symbols, string line, TextWriter writer)
+    private bool ProcessLine(out bool outputLine, List<BlockState> sectionState, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report)
     {
+        // optimization / simplicity: directive char must be first, no white chars allowed before
         if (line.Length <= 1 || line[0] != _directiveChar)
-            return state.SkipLevel == 0;
-
-        string directive = GetDirective(line);
-        if (_ignored.Contains(directive))
         {
+            outputLine = sectionState.Count == 0 || !sectionState[^1].SkipContent;
             return true;
         }
 
+        // TODO: this could fail in some cases
+        string directive = GetDirective(line);
+        if (_ignored.Contains(directive))
+        {
+            outputLine = true;
+            return true;
+        }
+
+        outputLine = false;
         switch (directive)
         {
             case _DIRECTIVE_IF:
             {
-                state.ScopeLevel++;
+                bool parentSkip = sectionState.Count > 0 && sectionState[^1].SkipContent;
+                bool skipContent = parentSkip || !_expressionSolver.Evaluate(_symbols, line.Substring(_DIRECTIVE_IF.Length + 1));
 
-                if (state.SkipLevel == 0)
+                sectionState.Add(new BlockState
                 {
-                    bool include = _expressionSolver.Evaluate(_symbols, line.Substring(_DIRECTIVE_IF.Length + 1));
-                    if (!include)
-                    {
-                        state.SkipLevel = state.ScopeLevel;
-                    }
+                    SkipContent = skipContent,
+                    CanHaveElif = true,
+                    CanHaveElse = true,
+                    ConditionFulfilled = !skipContent
+                });
+
+                return true;
+            }
+            case _DIRECTIVE_ELSE_IF:
+            {
+                if (sectionState.Count == 0)
+                {
+                    report?.Error(-1, string.Empty, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE_IF}` found!");
+                    return false;
                 }
 
-                break;
+                if (!sectionState[^1].CanHaveElif)
+                {
+                    report?.Error(-1, string.Empty, lineNumber, 0, $"Can't have `{_directiveChar}{_DIRECTIVE_ELSE_IF}` after `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
+                    return false;
+                }
+
+                BlockState state = sectionState[^1];
+
+                bool parentSkip = sectionState.Count > 1 && sectionState[^2].SkipContent;
+                bool skipContent = parentSkip || state.ConditionFulfilled || !_expressionSolver.Evaluate(_symbols, line.Substring(_DIRECTIVE_ELSE_IF.Length + 1));
+
+                state.SkipContent = skipContent;
+                state.ConditionFulfilled = state.ConditionFulfilled || !skipContent;
+                sectionState[^1] = state;
+
+                return true;
+            }
+            case _DIRECTIVE_ELSE:
+            {
+                if (sectionState.Count == 0)
+                {
+                    report?.Error(-1, string.Empty, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE}` found!");
+                    return false;
+                }
+
+                if (!sectionState[^1].CanHaveElse)
+                {
+                    report?.Error(-1, string.Empty, lineNumber, 0, $"Can't have multiple `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
+                    return false;
+                }
+
+                bool parentSkip = sectionState.Count > 1 && sectionState[^2].SkipContent;
+
+                BlockState state = sectionState[^1];
+                state.SkipContent = state.ConditionFulfilled || parentSkip;
+                state.CanHaveElse = false;
+                state.CanHaveElif = false;
+                sectionState[^1] = state;
+
+                return true;
             }
             case _DIRECTIVE_END:
             {
-                if (state.SkipLevel == state.ScopeLevel)
+                if (sectionState.Count == 0)
                 {
-                    state.SkipLevel = 0;
+                    report?.Error(-1, string.Empty, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_END}` found!");
+                    return false;
                 }
 
-                state.ScopeLevel--;
-                break;
+                sectionState.RemoveAt(sectionState.Count - 1);
+                return true;
             }
             case _DIRECTIVE_INCLUDE:
             {
-                HandleInclude(line.Substring(_DIRECTIVE_INCLUDE.Length + 1), symbols, writer);
-                break;
+                HandleInclude(line.Substring(_DIRECTIVE_INCLUDE.Length + 1), symbols, writer, report);
+                return true;
             }
             case _DIRECTIVE_DEFINE:
             {
                 // TODO: parse parameters: symbol and (optional) value
                 // symbols[symbol] = value;
-                break;
+                return true;
             }
             case _DIRECTIVE_UNDEFINE:
             {
                 // TODO: parse one parameter: symbol
                 // symbols.Remove(symbol);
-                break;
+                return true;
+            }
+            default:
+            {
+                // TODO: or emit error, depends on options
+                return true;
             }
         }
-
-        // by default strip all non-ignored directives
-        return false;
     }
 
-    private void HandleInclude(string parameter, Dictionary<string, string?> symbols, TextWriter writer)
+    private void HandleInclude(string parameter, Dictionary<string, string?> symbols, TextWriter writer, IReport? report)
     {
         TextReader reader = _includeResolver.CreateReader("./", parameter.TrimStart().TrimStart('"').TrimEnd().TrimEnd('"'));
-        ProcessSection(symbols, reader, writer);
+        ProcessSection(symbols, reader, writer, report);
     }
 
     private string GetDirective(string line)
@@ -150,9 +228,11 @@ public class Preprocessor
         return line.Substring(1, lastIndex); // length is lastIndex+1, but we -1 because of stripping #
     }
 
-    private struct SectionState
+    private struct BlockState
     {
-        public int ScopeLevel;
-        public int SkipLevel;
+        public bool ConditionFulfilled;
+        public bool CanHaveElse;
+        public bool CanHaveElif;
+        public bool SkipContent;
     }
 }
