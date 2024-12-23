@@ -1,14 +1,22 @@
 # TODO
 
-1. Parse string / file line by line
-2. Tokenize everything that starts with # 
-   * allow exceptions, i.e. keep #pragma / #version etc
+1. ~~Parse string / file line by line~~
+2. ~~Tokenize everything that starts with #~~ 
+   * ~~allow exceptions, i.e. keep #pragma / #version etc~~
 3. #include resolver
+   * ~~abstracted by interface~~
+   * support for error line number remapping 
 4. Conditional blocks
-   * #if, #elif #endif
-   * nested blocks
+   * ~~#if, #endif~~
+   * ~~nested blocks~~
+   * #else, #elif support
+5. Use ReadOnlySpan<char>
+6. Handle errors
+   * misconfiguration
+   * content errors
 
-## Features
+
+## Expected features
 
 ### Conditional blocks
 
@@ -21,15 +29,15 @@
 
 - `true`
 - `false`
-- number literal (int: 0, 1, -42, 0x01)
+- number literal (int: `0`, `1`, `-42`, `0x01`)
 - symbol name
-  - default value: 0
+  - default value: `null`
   - no symbol means undefined
-  - using undefined symbol always returns false
+  - using undefined symbol in compare node always returns false
 
 Nodes:
-- compare: >, <, >=, <=, ==, !=
-- logic: &&, ||, !
+- compare: `>`, `<`, `>=`, `<=`, `==`, `!=`
+- logic: `&&`, `||`, `!`
 
 ### Include directive
 
