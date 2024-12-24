@@ -7,16 +7,14 @@ public class TestReport : IReport
 {
     public readonly struct Entry
     {
-        public readonly int FileId;
-        public readonly string FilePath;
+        public readonly string FileId;
         public readonly int Line;
         public readonly int Column;
         public readonly string Message;
 
-        public Entry(int fileId, string filePath, int line, int column, string message)
+        public Entry(string fileId, int line, int column, string message)
         {
             FileId = fileId;
-            FilePath = filePath;
             Line = line;
             Column = column;
             Message = message;
@@ -25,8 +23,8 @@ public class TestReport : IReport
 
     public readonly List<Entry> Entries = [];
 
-    public void Error(int fileId, string filePath, int line, int column, string message)
+    public void Error(string fileId, int line, int column, string message)
     {
-        Entries.Add(new Entry(fileId, filePath, line, column, message));
+        Entries.Add(new Entry(fileId, line, column, message));
     }
 }

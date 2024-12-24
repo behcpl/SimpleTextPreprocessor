@@ -9,25 +9,18 @@ class Program
 {
     static void Main(string[] args)
     {
-        Preprocessor preprocessor = new Preprocessor(new IncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        FileSystemIncludeResolver includeResolver = new FileSystemIncludeResolver();
+        Preprocessor preprocessor = new Preprocessor(includeResolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
 
-        using TextReader source = new StreamReader("./ExampleData/example.txt");
+        const string sourceName = "./ExampleData/example.txt";
+        using TextReader source = new StreamReader(sourceName);
 
         StringBuilder sb = new StringBuilder();
         using TextWriter result = new StringWriter(sb);
         result.NewLine = "\r\n";
 
-        preprocessor.Process(source, result);
+        preprocessor.Process(includeResolver.GetFileId(sourceName), source, result);
 
         Console.WriteLine(sb.ToString());
-    }
-}
-
-public class IncludeResolver : IIncludeResolver
-{
-    public TextReader CreateReader(string currentPath, string includePath)
-    {
-        Console.WriteLine($"REQUEST: {includePath} FROM: {currentPath}");
-        return new StreamReader(Path.Combine(currentPath, includePath));
     }
 }

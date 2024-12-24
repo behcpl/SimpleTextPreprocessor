@@ -19,7 +19,7 @@ public class Preprocessor
     private readonly HashSet<string> _ignored;
     private readonly Dictionary<string, string?> _symbols;
     private readonly char _directiveChar;
-    public readonly bool _breakOnFirstError;
+    private readonly bool _breakOnFirstError;
 
     public Preprocessor(IIncludeResolver includeResolver, IExpressionSolver expressionSolver, PreprocessorOptions options)
     {
@@ -50,12 +50,17 @@ public class Preprocessor
 
     public bool Process(TextReader reader, TextWriter writer, IReport? report = null)
     {
-        Dictionary<string, string?> symbols = new(_symbols);
-
-        return ProcessSection(symbols, reader, writer, report);
+        return Process(".", reader, writer, report);
     }
 
-    private bool ProcessSection(Dictionary<string, string?> symbols, TextReader reader, TextWriter writer, IReport? report)
+    public bool Process(string fileId, TextReader reader, TextWriter writer, IReport? report = null)
+    {
+        Dictionary<string, string?> symbols = new(_symbols);
+
+        return ProcessSection(fileId, symbols, reader, writer, report);
+    }
+
+    private bool ProcessSection(string fileId, Dictionary<string, string?> symbols, TextReader reader, TextWriter writer, IReport? report)
     {
         List<BlockState> sectionState = [];
 
@@ -64,7 +69,7 @@ public class Preprocessor
         string? line = reader.ReadLine();
         while (line != null)
         {
-            bool success = ProcessLine(out bool outputLine, sectionState, symbols, line, lineNumber, writer, report);
+            bool success = ProcessLine(out bool outputLine, fileId, sectionState, symbols, line, lineNumber, writer, report);
             if (outputLine)
                 writer.WriteLine(line);
 
@@ -81,14 +86,14 @@ public class Preprocessor
 
         if (sectionState.Count > 0)
         {
-            report?.Error(-1, string.Empty, lineNumber, 0, "Unexpected end of file!");
+            report?.Error(fileId, lineNumber, 0, "Unexpected end of file!");
             return false;
         }
 
         return valid;
     }
 
-    private bool ProcessLine(out bool outputLine, List<BlockState> sectionState, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report)
+    private bool ProcessLine(out bool outputLine, string fileId, List<BlockState> sectionState, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report)
     {
         // optimization / simplicity: directive char must be first, no white chars allowed before
         if (line.Length <= 1 || line[0] != _directiveChar)
@@ -127,13 +132,13 @@ public class Preprocessor
             {
                 if (sectionState.Count == 0)
                 {
-                    report?.Error(-1, string.Empty, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE_IF}` found!");
+                    report?.Error(fileId, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE_IF}` found!");
                     return false;
                 }
 
                 if (!sectionState[^1].CanHaveElif)
                 {
-                    report?.Error(-1, string.Empty, lineNumber, 0, $"Can't have `{_directiveChar}{_DIRECTIVE_ELSE_IF}` after `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
+                    report?.Error(fileId, lineNumber, 0, $"Can't have `{_directiveChar}{_DIRECTIVE_ELSE_IF}` after `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
                     return false;
                 }
 
@@ -152,13 +157,13 @@ public class Preprocessor
             {
                 if (sectionState.Count == 0)
                 {
-                    report?.Error(-1, string.Empty, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE}` found!");
+                    report?.Error(fileId, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE}` found!");
                     return false;
                 }
 
                 if (!sectionState[^1].CanHaveElse)
                 {
-                    report?.Error(-1, string.Empty, lineNumber, 0, $"Can't have multiple `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
+                    report?.Error(fileId, lineNumber, 0, $"Can't have multiple `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
                     return false;
                 }
 
@@ -176,7 +181,7 @@ public class Preprocessor
             {
                 if (sectionState.Count == 0)
                 {
-                    report?.Error(-1, string.Empty, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_END}` found!");
+                    report?.Error(fileId, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_END}` found!");
                     return false;
                 }
 
@@ -185,8 +190,7 @@ public class Preprocessor
             }
             case _DIRECTIVE_INCLUDE:
             {
-                HandleInclude(line.Substring(_DIRECTIVE_INCLUDE.Length + 1), symbols, writer, report);
-                return true;
+                return HandleInclude(fileId, line.Substring(_DIRECTIVE_INCLUDE.Length + 1), symbols, writer, report);
             }
             case _DIRECTIVE_DEFINE:
             {
@@ -208,10 +212,14 @@ public class Preprocessor
         }
     }
 
-    private void HandleInclude(string parameter, Dictionary<string, string?> symbols, TextWriter writer, IReport? report)
+    private bool HandleInclude(string fileId, string parameter, Dictionary<string, string?> symbols, TextWriter writer, IReport? report)
     {
-        TextReader reader = _includeResolver.CreateReader("./", parameter.TrimStart().TrimStart('"').TrimEnd().TrimEnd('"'));
-        ProcessSection(symbols, reader, writer, report);
+        // TODO: remap report line/column here
+        if (!_includeResolver.TryCreateReader(fileId, parameter, out string? newFileId, out TextReader? reader, report))
+            return false;
+
+        using TextReader sectionReader = reader!;
+        return ProcessSection(newFileId!, symbols, sectionReader, writer, report);
     }
 
     private string GetDirective(string line)

@@ -2,5 +2,5 @@
 
 public interface IReport
 {
-    void Error(int fileId, string filePath, int line, int column, string message);
+    void Error(string fileId, int line, int column, string message);
 }

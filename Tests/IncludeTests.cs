@@ -29,7 +29,7 @@ public class IncludeTests
         include 2
         third line
         fourth line
-        
+
         """;
 
 
@@ -50,11 +50,32 @@ public class IncludeTests
         Assert.That(sb.ToString(), Is.EqualTo(_EXPECTED));
     }
 
+    [Test]
+    public void Include_fail_with_null_resolver()
+    {
+        Preprocessor preprocessor = new Preprocessor(new NullIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+
+        using TextReader source = new StringReader(_SOURCE);
+
+        StringBuilder sb = new StringBuilder();
+        using TextWriter result = new StringWriter(sb);
+        result.NewLine = "\r\n";
+
+
+        TestReport report = new TestReport();
+        bool ret = preprocessor.Process(source, result, report);
+
+        Assert.That(ret, Is.False);
+        Assert.That(report.Entries, Has.Count.EqualTo(1));
+    }
+
     private class StringIncludeResolver : IIncludeResolver
     {
-        public TextReader CreateReader(string currentPath, string includePath)
+        public bool TryCreateReader(string sourceFileId, string includeParameter, out string? newFileId, out TextReader? reader, IReport? report)
         {
-            return new StringReader(_INCLUDE);
+            newFileId = includeParameter;
+            reader = new StringReader(_INCLUDE);
+            return true;
         }
     }
 }
