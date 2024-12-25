@@ -2,6 +2,8 @@
 using System.IO;
 using System.Text;
 using SimpleTextPreprocessor;
+using SimpleTextPreprocessor.ExpressionSolver;
+using SimpleTextPreprocessor.IncludeResolver;
 
 namespace Sandbox;
 

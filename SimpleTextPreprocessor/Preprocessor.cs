@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using SimpleTextPreprocessor.ExpressionSolver;
+using SimpleTextPreprocessor.IncludeResolver;
 
 namespace SimpleTextPreprocessor;
 
@@ -56,11 +59,15 @@ public class Preprocessor
     public bool Process(string fileId, TextReader reader, TextWriter writer, IReport? report = null)
     {
         Dictionary<string, string?> symbols = new(_symbols);
+        List<string> fileIds =
+        [
+            fileId
+        ];
 
-        return ProcessSection(fileId, symbols, reader, writer, report);
+        return ProcessSection(fileIds, symbols, reader, writer, report);
     }
 
-    private bool ProcessSection(string fileId, Dictionary<string, string?> symbols, TextReader reader, TextWriter writer, IReport? report)
+    private bool ProcessSection(List<string> fileIds, Dictionary<string, string?> symbols, TextReader reader, TextWriter writer, IReport? report)
     {
         List<BlockState> sectionState = [];
 
@@ -69,7 +76,7 @@ public class Preprocessor
         string? line = reader.ReadLine();
         while (line != null)
         {
-            bool success = ProcessLine(out bool outputLine, fileId, sectionState, symbols, line, lineNumber, writer, report);
+            bool success = ProcessLine(out bool outputLine, fileIds, sectionState, symbols, line, lineNumber, writer, report);
             if (outputLine)
                 writer.WriteLine(line);
 
@@ -86,14 +93,14 @@ public class Preprocessor
 
         if (sectionState.Count > 0)
         {
-            report?.Error(fileId, lineNumber, 0, "Unexpected end of file!");
+            report?.Error(fileIds[^1], lineNumber, 0, "Unexpected end of file!");
             return false;
         }
 
         return valid;
     }
 
-    private bool ProcessLine(out bool outputLine, string fileId, List<BlockState> sectionState, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report)
+    private bool ProcessLine(out bool outputLine, List<string> fileIds, List<BlockState> sectionState, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report)
     {
         // optimization / simplicity: directive char must be first, no white chars allowed before
         if (line.Length <= 1 || line[0] != _directiveChar)
@@ -110,6 +117,7 @@ public class Preprocessor
             return true;
         }
 
+        string fileId = fileIds[^1];
         outputLine = false;
         switch (directive)
         {
@@ -190,7 +198,7 @@ public class Preprocessor
             }
             case _DIRECTIVE_INCLUDE:
             {
-                return HandleInclude(fileId, line.Substring(_DIRECTIVE_INCLUDE.Length + 1), symbols, writer, report);
+                return HandleInclude(fileIds, symbols, line, lineNumber, writer, report);
             }
             case _DIRECTIVE_DEFINE:
             {
@@ -212,14 +220,26 @@ public class Preprocessor
         }
     }
 
-    private bool HandleInclude(string fileId, string parameter, Dictionary<string, string?> symbols, TextWriter writer, IReport? report)
+    private bool HandleInclude(List<string> fileIds, Dictionary<string, string?> symbols,  string line, int lineNumber, TextWriter writer, IReport? report)
     {
+        string parameter = line.Substring(_DIRECTIVE_INCLUDE.Length + 1);
+        
         // TODO: remap report line/column here
-        if (!_includeResolver.TryCreateReader(fileId, parameter, out string? newFileId, out TextReader? reader, report))
+        if (!_includeResolver.TryCreateReader(fileIds[^1], parameter, out string? newFileId, out TextReader? reader, report))
             return false;
 
-        using TextReader sectionReader = reader!;
-        return ProcessSection(newFileId!, symbols, sectionReader, writer, report);
+        Debug.Assert(newFileId != null);
+        Debug.Assert(reader != null);
+        
+        using TextReader sectionReader = reader;
+        if (fileIds.IndexOf(newFileId) >= 0)
+        {
+            report?.Error(fileIds[^1], lineNumber, 0, $"Recursive loop detected when including '{newFileId}'!");
+            return false;
+        }
+        
+        fileIds.Add(newFileId);
+        return ProcessSection(fileIds, symbols, sectionReader, writer, report);
     }
 
     private string GetDirective(string line)

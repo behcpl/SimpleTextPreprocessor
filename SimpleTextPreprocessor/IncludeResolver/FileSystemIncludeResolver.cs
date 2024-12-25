@@ -1,12 +1,12 @@
 ﻿using System.IO;
 
-namespace SimpleTextPreprocessor;
+namespace SimpleTextPreprocessor.IncludeResolver;
 
 public class FileSystemIncludeResolver : IIncludeResolver
 {  
     /// <summary>
-    /// Translate any path (local or absolute) into "fileId" compatible with this resolver.
-    /// This value can be passed as "string fileId" when calling Preprocessor.Process()
+    /// Translate any path (local or absolute) into <c>fileId</c> compatible with this resolver.
+    /// This value can be passed as <c>string fileId</c> when calling <c>Preprocessor.Process()</c>
     /// </summary>
     /// <param name="path">Local or absolute path of file that is processed</param>
     /// <returns>fileId</returns>

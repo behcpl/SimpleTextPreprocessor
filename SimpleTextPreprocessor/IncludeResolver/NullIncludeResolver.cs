@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace SimpleTextPreprocessor;
+namespace SimpleTextPreprocessor.IncludeResolver;
 
 // TODO: should this always succeed but with empty data?
 public class NullIncludeResolver : IIncludeResolver
