@@ -9,11 +9,16 @@
 4. Conditional blocks
    * ~~#if, #endif~~
    * ~~nested blocks~~
-   * #else, #elif support
-5. Use ReadOnlySpan<char>
+   * ~~#else, #elif support~~
+5. ~~Use ReadOnlySpan<char>~~ <- decided not to use it
 6. Handle errors
    * misconfiguration
-   * content errors
+   * content errors <- mostly done?
+     * handle potential exceptions
+7. Expression solver
+   * compare int values
+   * boolean logic
+   * brackets (and operator precedence)
 
 
 ## Expected features
