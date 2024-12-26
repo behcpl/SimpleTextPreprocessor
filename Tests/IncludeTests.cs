@@ -74,7 +74,7 @@ public class IncludeTests
         result.NewLine = "\r\n";
 
 
-        TestReport report = new TestReport();
+        ReportList report = new ReportList();
         bool ret = preprocessor.Process(source, result, report);
 
         Assert.That(ret, Is.False);
@@ -92,7 +92,7 @@ public class IncludeTests
         using TextWriter result = new StringWriter(sb);
         result.NewLine = "\r\n";
 
-        TestReport report = new TestReport();
+        ReportList report = new ReportList();
         bool ret = preprocessor.Process(source, result, report);
 
         Assert.That(ret, Is.True);
@@ -123,7 +123,7 @@ public class IncludeTests
         using TextWriter result = new StringWriter(sb);
         result.NewLine = "\r\n";
 
-        TestReport report = new TestReport();
+        ReportList report = new ReportList();
         bool ret = preprocessor.Process(source, result, report);
 
         Assert.That(ret, Is.False);
@@ -154,7 +154,7 @@ public class IncludeTests
         using TextWriter result = new StringWriter(sb);
         result.NewLine = "\r\n";
 
-        TestReport report = new TestReport();
+        ReportList report = new ReportList();
         bool ret = preprocessor.Process(source, result, report);
 
         Assert.That(ret, Is.False);
