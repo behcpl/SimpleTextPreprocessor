@@ -15,4 +15,9 @@ public class DummyExpressionSolver : IExpressionSolver
 
         return trimmed == "true";
     }
+
+    public bool IsValidValue(string value)
+    {
+        return false; // DummyExpressionSolver doesn't support any values
+    }
 }

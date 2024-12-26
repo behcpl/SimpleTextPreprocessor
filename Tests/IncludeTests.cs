@@ -63,7 +63,7 @@ public class IncludeTests
     }
 
     [Test]
-    public void Include_fail_with_null_resolver()
+    public void Include_fails_with_null_resolver()
     {
         Preprocessor preprocessor = new Preprocessor(new NullIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
 
@@ -100,7 +100,7 @@ public class IncludeTests
     }
 
     [Test]
-    public void Include_fail_when_loop_is_detected()
+    public void Include_fails_when_loop_is_detected()
     {
         InMemoryIncludeResolver resolver = new InMemoryIncludeResolver();
         resolver.Entries.Add("a", """
@@ -132,20 +132,20 @@ public class IncludeTests
     }
 
     [Test]
-    public void Include_fail_without_parameter()
+    public void Include_fails_without_parameter()
     {
         Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
 
-
         // disable formatter to keep 2 spaces after include
         // @formatter:off
-        const string sourceString = """
-                                    first line
-                                    second line
-                                    #include  
-                                    third line
-                                    fourth line
-                                    """;
+        const string sourceString = 
+            """
+            first line
+            second line
+            #include  
+            third line
+            fourth line
+            """;
         // @formatter:on
 
         using TextReader source = new StringReader(sourceString);

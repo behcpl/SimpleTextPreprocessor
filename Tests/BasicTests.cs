@@ -7,33 +7,36 @@ namespace Tests;
 
 public class BasicTests
 {
-    private const string _PURE_TEXT = """
-                                      first line
-                                      second line
-                                      third line
-                                      fourth line
-                                      """;
+    private const string _PURE_TEXT =
+        """
+        first line
+        second line
+        third line
+        fourth line
+        """;
 
     private const string _PURE_TEXT_WITH_ENDL = _PURE_TEXT + "\r\n";
 
-    private const string _UNKNOWN_DIRECTIVES = """
-                                               #version 1.2.3
-                                               first line
-                                               second line
-                                               #something else
-                                               third line
-                                               fourth line
+    private const string _UNKNOWN_DIRECTIVES =
+        """
+        #version 1.2.3
+        first line
+        second line
+        #something else
+        third line
+        fourth line
 
-                                               """;
+        """;
 
-    private const string _KEEP_VERSION = """
-                                         #version 1.2.3
-                                         first line
-                                         second line
-                                         third line
-                                         fourth line
+    private const string _KEEP_VERSION =
+        """
+        #version 1.2.3
+        first line
+        second line
+        third line
+        fourth line
 
-                                         """;
+        """;
 
     private static IEnumerable<TestCaseData> TestCases()
     {

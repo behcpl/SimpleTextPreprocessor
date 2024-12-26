@@ -42,7 +42,7 @@ public class Preprocessor
         _ignored.Add(directive);
     }
 
-    public void Define(string symbol, string? value)
+    public void Define(string symbol, string? value = null)
     {
         _symbols[symbol] = value;
     }
@@ -133,7 +133,7 @@ public class Preprocessor
             {
                 bool parentSkip = sectionState.Count > 0 && sectionState[^1].SkipContent;
                 bool validExpression = FindExpression(line, dirEnd, out int expStart, out int expEnd);
-                bool skipContent = parentSkip || !validExpression || !_expressionSolver.Evaluate(_symbols, line.Substring(expStart, expEnd - expStart));
+                bool skipContent = parentSkip || !validExpression || !_expressionSolver.Evaluate(symbols, line.Substring(expStart, expEnd - expStart));
 
                 if (!validExpression)
                 {
@@ -168,7 +168,7 @@ public class Preprocessor
 
                 bool parentSkip = sectionState.Count > 1 && sectionState[^2].SkipContent;
                 bool validExpression = FindExpression(line, dirEnd, out int expStart, out int expEnd);
-                bool skipContent = parentSkip || state.ConditionFulfilled || !validExpression || !_expressionSolver.Evaluate(_symbols, line.Substring(expStart, expEnd - expStart));
+                bool skipContent = parentSkip || state.ConditionFulfilled || !validExpression || !_expressionSolver.Evaluate(symbols, line.Substring(expStart, expEnd - expStart));
 
                 if (!validExpression)
                 {
@@ -236,15 +236,45 @@ public class Preprocessor
             }
             case _DIRECTIVE_DEFINE:
             {
-                // TODO: parse parameters: symbol and (optional) value
-                // symbols[symbol] = value;
+                if (!FindNonWhiteSeparatedSymbol(line, dirEnd, out int symStart, out int symEnd))
+                {
+                    report?.Error(fileIds[^1], lineNumber, line.Length, $"No symbol name found after `{_directiveChar}{_DIRECTIVE_DEFINE}` directive!");
+                    return false;
+                }
+
+                string symbol = line.Substring(symStart, symEnd - symStart);
+                string? value = null;
+
+                if (FindExpression(line, symEnd, out int expStart, out int expEnd))
+                {
+                    string symbolValue = line.Substring(expStart, expEnd - expStart);
+                    // TODO: pass report to expression solver for detailed info
+                    if (_expressionSolver.IsValidValue(symbolValue))
+                        value = symbolValue;
+                }
+
+                symbols[symbol] = value;
                 return true;
             }
             case _DIRECTIVE_UNDEFINE:
             {
-                // TODO: parse one parameter: symbol
-                // symbols.Remove(symbol);
-                return true;
+                if (!FindNonWhiteSeparatedSymbol(line, dirEnd, out int symStart, out int symEnd))
+                {
+                    report?.Error(fileIds[^1], lineNumber, line.Length, $"No symbol name found after `{_directiveChar}{_DIRECTIVE_UNDEFINE}` directive!");
+                    return false;
+                }
+              
+                string symbol = line.Substring(symStart, symEnd - symStart);
+
+                bool valid = true;
+                if (!CheckForEmpty(line, symEnd, out int nonWhiteChar))
+                {
+                    report?.Error(fileIds[^1], lineNumber, nonWhiteChar, $"Unexpected character after `{_directiveChar}{_DIRECTIVE_UNDEFINE} {symbol}`!");
+                    valid = false;
+                }
+
+                symbols.Remove(symbol);
+                return valid;
             }
             default:
             {
