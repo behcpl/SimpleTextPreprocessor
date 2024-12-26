@@ -16,8 +16,17 @@ public class DummyExpressionSolver : IExpressionSolver
         return trimmed == "true";
     }
 
-    public bool IsValidValue(string value)
+    public bool TryEvaluate(IReadOnlyDictionary<string, string?> symbols, string expression, out bool result, IReport? report)
     {
-        return false; // DummyExpressionSolver doesn't support any values
+        string trimmed = expression.TrimStart().TrimEnd();
+
+        result = symbols.ContainsKey(trimmed) || trimmed == "true";
+        return true;
+    }
+
+    public bool IsValidValue(string value, IReport? report)
+    {
+        report?.Error($"{nameof(DummyExpressionSolver)} doesn't support any values!");
+        return false;
     }
 }

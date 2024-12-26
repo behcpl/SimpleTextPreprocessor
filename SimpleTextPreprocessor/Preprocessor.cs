@@ -131,13 +131,33 @@ public class Preprocessor
         {
             case _DIRECTIVE_IF:
             {
-                bool parentSkip = sectionState.Count > 0 && sectionState[^1].SkipContent;
-                bool validExpression = FindExpression(line, dirEnd, out int expStart, out int expEnd);
-                bool skipContent = parentSkip || !validExpression || !_expressionSolver.Evaluate(symbols, line.Substring(expStart, expEnd - expStart));
+                bool valid = true;
+                bool skipContent = sectionState.Count > 0 && sectionState[^1].SkipContent;
 
-                if (!validExpression)
+                if (!FindExpression(line, dirEnd, out int expStart, out int expEnd))
                 {
+                    valid = false;
+                    skipContent = true;
                     report?.Error(fileIds[^1], lineNumber, line.Length, $"No expression found after `{_directiveChar}{_DIRECTIVE_IF}` directive!");
+                }
+                else if (!skipContent)
+                {
+                    if (report != null)
+                    {
+                        report.CurrentFileId = fileIds[^1];
+                        report.CurrentLine = lineNumber;
+                        report.CurrentColumn = expStart;
+                    }
+
+                    if (_expressionSolver.TryEvaluate(symbols, line.Substring(expStart, expEnd - expStart), out bool evalResult, report))
+                    {
+                        skipContent = !evalResult;
+                    }
+                    else
+                    {
+                        skipContent = true;
+                        valid = false;
+                    }
                 }
 
                 sectionState.Add(new BlockState
@@ -148,7 +168,7 @@ public class Preprocessor
                     ConditionFulfilled = !skipContent
                 });
 
-                return validExpression;
+                return valid;
             }
             case _DIRECTIVE_ELSE_IF:
             {
@@ -166,20 +186,40 @@ public class Preprocessor
 
                 BlockState state = sectionState[^1];
 
-                bool parentSkip = sectionState.Count > 1 && sectionState[^2].SkipContent;
-                bool validExpression = FindExpression(line, dirEnd, out int expStart, out int expEnd);
-                bool skipContent = parentSkip || state.ConditionFulfilled || !validExpression || !_expressionSolver.Evaluate(symbols, line.Substring(expStart, expEnd - expStart));
+                bool valid = true;
+                bool skipContent = state.ConditionFulfilled || sectionState.Count > 1 && sectionState[^2].SkipContent;
 
-                if (!validExpression)
+                if (!FindExpression(line, dirEnd, out int expStart, out int expEnd))
                 {
+                    valid = false;
+                    skipContent = true;
                     report?.Error(fileIds[^1], lineNumber, line.Length, $"No expression found after `{_directiveChar}{_DIRECTIVE_IF}` directive!");
+                }
+                else if (!skipContent)
+                {
+                    if (report != null)
+                    {
+                        report.CurrentFileId = fileIds[^1];
+                        report.CurrentLine = lineNumber;
+                        report.CurrentColumn = expStart;
+                    }
+
+                    if (_expressionSolver.TryEvaluate(symbols, line.Substring(expStart, expEnd - expStart), out bool evalResult, report))
+                    {
+                        skipContent = !evalResult;
+                    }
+                    else
+                    {
+                        skipContent = true;
+                        valid = false;
+                    }
                 }
 
                 state.SkipContent = skipContent;
                 state.ConditionFulfilled = state.ConditionFulfilled || !skipContent;
                 sectionState[^1] = state;
 
-                return validExpression;
+                return valid;
             }
             case _DIRECTIVE_ELSE:
             {
@@ -247,9 +287,15 @@ public class Preprocessor
 
                 if (FindExpression(line, symEnd, out int expStart, out int expEnd))
                 {
+                    if (report != null)
+                    {
+                        report.CurrentFileId = fileIds[^1];
+                        report.CurrentLine = lineNumber;
+                        report.CurrentColumn = expStart;
+                    }
+                    
                     string symbolValue = line.Substring(expStart, expEnd - expStart);
-                    // TODO: pass report to expression solver for detailed info
-                    if (_expressionSolver.IsValidValue(symbolValue))
+                    if (_expressionSolver.IsValidValue(symbolValue, report))
                         value = symbolValue;
                 }
 
@@ -263,7 +309,7 @@ public class Preprocessor
                     report?.Error(fileIds[^1], lineNumber, line.Length, $"No symbol name found after `{_directiveChar}{_DIRECTIVE_UNDEFINE}` directive!");
                     return false;
                 }
-              
+
                 string symbol = line.Substring(symStart, symEnd - symStart);
 
                 bool valid = true;

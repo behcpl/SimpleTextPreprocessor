@@ -4,8 +4,7 @@ namespace SimpleTextPreprocessor;
 
 public interface IExpressionSolver
 {
-    // TODO: add error handling support
-    bool Evaluate(IReadOnlyDictionary<string, string?> symbols, string expression);
+    bool TryEvaluate(IReadOnlyDictionary<string, string?> symbols, string expression, out bool result, IReport? report);
 
-    bool IsValidValue(string value);
+    bool IsValidValue(string value, IReport? report);
 }
