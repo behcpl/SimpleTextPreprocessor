@@ -152,7 +152,7 @@ public class DefineTests
         Assert.That(ret, Is.True);
         Assert.That(sb.ToString(), Is.EqualTo(expectedText));
     }
-    
+
     [Test]
     public void Define_fails_without_symbol_name()
     {
@@ -184,7 +184,7 @@ public class DefineTests
         Assert.That(report.Entries[0].Line, Is.EqualTo(2));
         Assert.That(report.Entries[0].Column, Is.EqualTo(9));
     }
-    
+
     [Test]
     public void Undef_fails_without_symbol_name()
     {
@@ -215,8 +215,8 @@ public class DefineTests
         Assert.That(report.Entries, Has.Count.EqualTo(1));
         Assert.That(report.Entries[0].Line, Is.EqualTo(2));
         Assert.That(report.Entries[0].Column, Is.EqualTo(8));
-    }  
-    
+    }
+
     [Test]
     public void Undef_fails_with_characters_after_symbol_name()
     {
@@ -247,5 +247,58 @@ public class DefineTests
         Assert.That(report.Entries, Has.Count.EqualTo(1));
         Assert.That(report.Entries[0].Line, Is.EqualTo(2));
         Assert.That(report.Entries[0].Column, Is.EqualTo(18));
+    }
+
+    [Test]
+    public void Symbols_modified_inside_content_are_not_persistent()
+    {
+        const string sourceText =
+            """
+            line 1
+            #if FILE_DEFINED
+            file defined line 1
+            #endif
+            #if SYSTEM_DEFINED
+            system defined line 1
+            #endif
+            #include set
+            line 2
+            #if FILE_DEFINED
+            file defined line 2
+            #endif
+            #if SYSTEM_DEFINED
+            system defined line 2
+            #endif
+            """;
+
+        InMemoryIncludeResolver includeResolver = new InMemoryIncludeResolver();
+        includeResolver.Entries["set"] =
+            """
+            #define FILE_DEFINED
+            #undef SYSTEM_DEFINED
+            """;
+
+        Preprocessor preprocessor = new Preprocessor(includeResolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        preprocessor.Define("SYSTEM_DEFINED");
+
+        using TextReader source1 = new StringReader(sourceText);
+
+        StringBuilder sb1 = new StringBuilder();
+        using TextWriter result1 = new StringWriter(sb1);
+        result1.NewLine = "\r\n";
+
+        bool ret1 = preprocessor.Process(source1, result1);
+
+        using TextReader source2 = new StringReader(sourceText);
+     
+        StringBuilder sb2 = new StringBuilder();
+        using TextWriter result2 = new StringWriter(sb2);
+        result2.NewLine = "\r\n";
+
+        bool ret2 = preprocessor.Process(source2, result2);
+
+        Assert.That(ret1, Is.True);
+        Assert.That(ret2, Is.True);
+        Assert.That(sb2.ToString(), Is.EqualTo(sb1.ToString()));
     }
 }
