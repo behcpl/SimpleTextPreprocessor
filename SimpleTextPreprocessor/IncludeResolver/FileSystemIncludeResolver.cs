@@ -29,7 +29,7 @@ public class FileSystemIncludeResolver : IIncludeResolver
 
         if (!File.Exists(newPath))
         {
-            report?.Error(sourceFileId, 0, 0, $"File '{newPath}' does not exist!");
+            report?.Error(sourceFileId, report.CurrentLine, report.CurrentColumn, $"File '{newPath}' does not exist!");
             newFileId = null;
             reader = null;
             return false;

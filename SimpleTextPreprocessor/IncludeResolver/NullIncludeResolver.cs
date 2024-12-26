@@ -7,7 +7,7 @@ public class NullIncludeResolver : IIncludeResolver
 {
     public bool TryCreateReader(string sourceFileId, string includeParameter, out string? newFileId, out TextReader? reader, IReport? report)
     {
-        report?.Error(sourceFileId, 0, 0, $"{nameof(NullIncludeResolver)} always fail!");
+        report?.Error(sourceFileId, report.CurrentLine, 0, $"{nameof(NullIncludeResolver)} always fail!");
         newFileId = null;
         reader = null;
         return false;

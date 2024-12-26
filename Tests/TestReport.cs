@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using SimpleTextPreprocessor;
 
 namespace Tests;
@@ -23,8 +24,26 @@ public class TestReport : IReport
 
     public readonly List<Entry> Entries = [];
 
-    public void Error(string fileId, int line, int column, string message)
+    public TestReport()
     {
-        Entries.Add(new Entry(fileId, line, column, message));
+        CurrentFileId = string.Empty;
+    }
+
+    public void Error(string fileId, int line, int column, string message) { }
+
+    public string CurrentFileId { get; set; }
+
+    public int CurrentLine { get; set; }
+
+    public int CurrentColumn { get; set; }
+
+    public void Error(string message)
+    {
+        Entries.Add(new Entry(CurrentFileId, CurrentLine, CurrentColumn, message));
+    }
+
+    public void Exception(Exception e)
+    {
+        throw new NotImplementedException();
     }
 }

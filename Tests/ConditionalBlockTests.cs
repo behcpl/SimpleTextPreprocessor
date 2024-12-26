@@ -369,7 +369,7 @@ public class ConditionalBlockTests
         const string sourceText =
             """
             first line
-            #if
+            #if true
             second line
             #else
             third line
@@ -391,5 +391,128 @@ public class ConditionalBlockTests
         Assert.That(ret, Is.False);
         Assert.That(report.Entries, Has.Count.EqualTo(1));
         Assert.That(report.Entries[0].Line, Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Fail_on_if_without_expression()
+    {
+        // disable formatter to keep 2 spaces after elif
+        // @formatter:off
+        const string sourceText =
+            """
+            first line
+            #if  
+            second line
+            #endif
+            third line
+            """;
+        // @formatter:on
+
+        Preprocessor preprocessor = new Preprocessor();
+        using TextReader source = new StringReader(sourceText);
+
+        StringBuilder sb = new StringBuilder();
+        using TextWriter result = new StringWriter(sb);
+        result.NewLine = "\r\n";
+
+        TestReport report = new TestReport();
+        bool ret = preprocessor.Process(source, result, report);
+
+        Assert.That(ret, Is.False);
+        Assert.That(report.Entries, Has.Count.EqualTo(1));
+        Assert.That(report.Entries[0].Line, Is.EqualTo(1));
+        Assert.That(report.Entries[0].Column, Is.EqualTo(5)); // NOTE: extra 2 spaces after #if
+    }
+
+    [Test]
+    public void Fail_on_elif_without_expression()
+    {
+        // disable formatter to keep 2 spaces after elif
+        // @formatter:off
+        const string sourceText =
+            """
+            first line
+            #if true
+            second line
+            #elif  
+            third line
+            #endif
+            fourth line
+            """;
+        // @formatter:on
+
+        Preprocessor preprocessor = new Preprocessor();
+        using TextReader source = new StringReader(sourceText);
+
+        StringBuilder sb = new StringBuilder();
+        using TextWriter result = new StringWriter(sb);
+        result.NewLine = "\r\n";
+
+        TestReport report = new TestReport();
+        bool ret = preprocessor.Process(source, result, report);
+
+        Assert.That(ret, Is.False);
+        Assert.That(report.Entries, Has.Count.EqualTo(1));
+        Assert.That(report.Entries[0].Line, Is.EqualTo(3));
+        Assert.That(report.Entries[0].Column, Is.EqualTo(7)); // NOTE: extra 2 spaces after #elif
+    }
+
+
+    [Test]
+    public void Fail_on_text_after_else()
+    {
+        const string sourceText =
+            """
+            first line
+            #if true
+            second line
+            #else something
+            third line
+            #endif
+            fourth line
+            """;
+
+        Preprocessor preprocessor = new Preprocessor();
+        using TextReader source = new StringReader(sourceText);
+
+        StringBuilder sb = new StringBuilder();
+        using TextWriter result = new StringWriter(sb);
+        result.NewLine = "\r\n";
+
+        TestReport report = new TestReport();
+        bool ret = preprocessor.Process(source, result, report);
+
+        Assert.That(ret, Is.False);
+        Assert.That(report.Entries, Has.Count.EqualTo(1));
+        Assert.That(report.Entries[0].Line, Is.EqualTo(3));
+        Assert.That(report.Entries[0].Column, Is.EqualTo(6));
+    }
+
+    [Test]
+    public void Fail_on_text_after_endif()
+    {
+        const string sourceText =
+            """
+            first line
+            #if true
+            second line
+            #endif something
+            third line
+            """;
+
+        Preprocessor preprocessor = new Preprocessor();
+        using TextReader source = new StringReader(sourceText);
+
+        StringBuilder sb = new StringBuilder();
+        using TextWriter result = new StringWriter(sb);
+        result.NewLine = "\r\n";
+
+        TestReport report = new TestReport();
+        bool ret = preprocessor.Process(source, result, report);
+
+        Assert.That(ret, Is.False);
+        Assert.That(report.Entries, Has.Count.EqualTo(1));
+        Assert.That(report.Entries[0].Line, Is.EqualTo(3));
+        Assert.That(report.Entries[0].Column, Is.EqualTo(7));
     }
 }

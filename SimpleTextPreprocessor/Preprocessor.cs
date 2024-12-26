@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using SimpleTextPreprocessor.ExpressionSolver;
@@ -53,7 +54,8 @@ public class Preprocessor
 
     public bool Process(TextReader reader, TextWriter writer, IReport? report = null)
     {
-        return Process(".", reader, writer, report);
+        // using invalid path characters here to guard against undefined behaviour when using FileSystemIncludeResolver
+        return Process("*root*", reader, writer, report);
     }
 
     public bool Process(string fileId, TextReader reader, TextWriter writer, IReport? report = null)
@@ -109,22 +111,34 @@ public class Preprocessor
             return true;
         }
 
-        // TODO: this could fail in some cases
-        string directive = GetDirective(line);
-        if (_ignored.Contains(directive))
+        if (!FindDirective(line, out int dirStart, out int dirEnd))
+        {
+            report?.Error(fileIds[^1], lineNumber, 1, $"No directive found after `{_directiveChar}` character!");
+            outputLine = false;
+            return false;
+        }
+
+        ReadOnlySpan<char> directive = line.AsSpan(dirStart, dirEnd - dirStart);
+        // TODO: convert _ignored to use ReadOnlyMemory and add custom comparer
+        if (_ignored.Contains(directive.ToString()))
         {
             outputLine = true;
             return true;
         }
 
-        string fileId = fileIds[^1];
         outputLine = false;
         switch (directive)
         {
             case _DIRECTIVE_IF:
             {
                 bool parentSkip = sectionState.Count > 0 && sectionState[^1].SkipContent;
-                bool skipContent = parentSkip || !_expressionSolver.Evaluate(_symbols, line.Substring(_DIRECTIVE_IF.Length + 1));
+                bool validExpression = FindExpression(line, dirEnd, out int expStart, out int expEnd);
+                bool skipContent = parentSkip || !validExpression || !_expressionSolver.Evaluate(_symbols, line.Substring(expStart, expEnd - expStart));
+
+                if (!validExpression)
+                {
+                    report?.Error(fileIds[^1], lineNumber, line.Length, $"No expression found after `{_directiveChar}{_DIRECTIVE_IF}` directive!");
+                }
 
                 sectionState.Add(new BlockState
                 {
@@ -134,45 +148,58 @@ public class Preprocessor
                     ConditionFulfilled = !skipContent
                 });
 
-                return true;
+                return validExpression;
             }
             case _DIRECTIVE_ELSE_IF:
             {
                 if (sectionState.Count == 0)
                 {
-                    report?.Error(fileId, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE_IF}` found!");
+                    report?.Error(fileIds[^1], lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE_IF}` found!");
                     return false;
                 }
 
                 if (!sectionState[^1].CanHaveElif)
                 {
-                    report?.Error(fileId, lineNumber, 0, $"Can't have `{_directiveChar}{_DIRECTIVE_ELSE_IF}` after `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
+                    report?.Error(fileIds[^1], lineNumber, 0, $"Can't have `{_directiveChar}{_DIRECTIVE_ELSE_IF}` after `{_directiveChar}{_DIRECTIVE_ELSE}` directive!");
                     return false;
                 }
 
                 BlockState state = sectionState[^1];
 
                 bool parentSkip = sectionState.Count > 1 && sectionState[^2].SkipContent;
-                bool skipContent = parentSkip || state.ConditionFulfilled || !_expressionSolver.Evaluate(_symbols, line.Substring(_DIRECTIVE_ELSE_IF.Length + 1));
+                bool validExpression = FindExpression(line, dirEnd, out int expStart, out int expEnd);
+                bool skipContent = parentSkip || state.ConditionFulfilled || !validExpression || !_expressionSolver.Evaluate(_symbols, line.Substring(expStart, expEnd - expStart));
+
+                if (!validExpression)
+                {
+                    report?.Error(fileIds[^1], lineNumber, line.Length, $"No expression found after `{_directiveChar}{_DIRECTIVE_IF}` directive!");
+                }
 
                 state.SkipContent = skipContent;
                 state.ConditionFulfilled = state.ConditionFulfilled || !skipContent;
                 sectionState[^1] = state;
 
-                return true;
+                return validExpression;
             }
             case _DIRECTIVE_ELSE:
             {
                 if (sectionState.Count == 0)
                 {
-                    report?.Error(fileId, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE}` found!");
+                    report?.Error(fileIds[^1], lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_ELSE}` found!");
                     return false;
                 }
 
                 if (!sectionState[^1].CanHaveElse)
                 {
-                    report?.Error(fileId, lineNumber, 0, $"Can't have multiple `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
+                    report?.Error(fileIds[^1], lineNumber, 0, $"Can't have multiple `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
                     return false;
+                }
+                
+                bool valid = true;
+                if (!CheckForEmpty(line, dirEnd, out int nonWhiteChar))
+                {
+                    report?.Error(fileIds[^1], lineNumber, nonWhiteChar, $"Unexpected character after `{_directiveChar}{_DIRECTIVE_ELSE}`!");
+                    valid = false;
                 }
 
                 bool parentSkip = sectionState.Count > 1 && sectionState[^2].SkipContent;
@@ -183,18 +210,25 @@ public class Preprocessor
                 state.CanHaveElif = false;
                 sectionState[^1] = state;
 
-                return true;
+                return valid;
             }
             case _DIRECTIVE_END:
             {
                 if (sectionState.Count == 0)
                 {
-                    report?.Error(fileId, lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_END}` found!");
+                    report?.Error(fileIds[^1], lineNumber, 0, $"Unexpected directive `{_directiveChar}{_DIRECTIVE_END}` found!");
                     return false;
                 }
 
+                bool valid = true;
+                if (!CheckForEmpty(line, dirEnd, out int nonWhiteChar))
+                {
+                    report?.Error(fileIds[^1], lineNumber, nonWhiteChar, $"Unexpected character after `{_directiveChar}{_DIRECTIVE_END}`!");
+                    valid = false;
+                }
+  
                 sectionState.RemoveAt(sectionState.Count - 1);
-                return true;
+                return valid;
             }
             case _DIRECTIVE_INCLUDE:
             {
@@ -220,40 +254,113 @@ public class Preprocessor
         }
     }
 
-    private bool HandleInclude(List<string> fileIds, Dictionary<string, string?> symbols,  string line, int lineNumber, TextWriter writer, IReport? report)
+    private bool HandleInclude(List<string> fileIds, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report)
     {
         string parameter = line.Substring(_DIRECTIVE_INCLUDE.Length + 1);
-        
+
         // TODO: remap report line/column here
         if (!_includeResolver.TryCreateReader(fileIds[^1], parameter, out string? newFileId, out TextReader? reader, report))
             return false;
 
         Debug.Assert(newFileId != null);
         Debug.Assert(reader != null);
-        
+
         using TextReader sectionReader = reader;
         if (fileIds.IndexOf(newFileId) >= 0)
         {
             report?.Error(fileIds[^1], lineNumber, 0, $"Recursive loop detected when including '{newFileId}'!");
             return false;
         }
-        
+
         fileIds.Add(newFileId);
-        return ProcessSection(fileIds, symbols, sectionReader, writer, report);
+        bool valid = ProcessSection(fileIds, symbols, sectionReader, writer, report);
+        fileIds.RemoveAt(fileIds.Count - 1);
+        return valid;
     }
 
-    private string GetDirective(string line)
+    private static bool FindDirective(string line, out int start, out int end)
     {
-        int lastIndex = 1;
+        start = 1;
+        end = 1;
         for (int i = 1; i < line.Length; i++)
         {
-            if (line[i] == ' ' || line[i] == '\t')
+            if (char.IsWhiteSpace(line[i]))
                 break;
 
-            lastIndex = i;
+            end = i + 1;
         }
 
-        return line.Substring(1, lastIndex); // length is lastIndex+1, but we -1 because of stripping #
+        return end > start;
+    }
+
+    private static bool FindNonWhiteSeparatedSymbol(string line, int lineOffset, out int start, out int end)
+    {
+        start = int.MaxValue;
+
+        // skip white chars
+        for (int i = lineOffset; i < line.Length; i++)
+        {
+            if (char.IsWhiteSpace(line[i]))
+                continue;
+
+            start = i;
+            break;
+        }
+
+        end = start;
+        for (int i = start; i < line.Length; i++)
+        {
+            if (char.IsWhiteSpace(line[i]))
+                break;
+
+            end = i + 1;
+        }
+
+        return end > start;
+    }
+
+    private static bool FindExpression(string line, int lineOffset, out int start, out int end)
+    {
+        start = int.MaxValue;
+
+        // trim white chars from lineOffset
+        for (int i = lineOffset; i < line.Length; i++)
+        {
+            if (char.IsWhiteSpace(line[i]))
+                continue;
+
+            start = i;
+            break;
+        }
+
+        end = 0;
+
+        // trim white chars from line.Length
+        for (int i = line.Length - 1; i >= lineOffset; i--)
+        {
+            if (char.IsWhiteSpace(line[i]))
+                continue;
+
+            end = i + 1;
+            break;
+        }
+
+        return end > start;
+    }
+
+    private static bool CheckForEmpty(string line, int lineOffset, out int nonWhiteChar)
+    {
+        for (int i = lineOffset; i < line.Length; i++)
+        {
+            if (char.IsWhiteSpace(line[i]))
+                continue;
+            
+            nonWhiteChar = i;
+            return false;
+        }
+
+        nonWhiteChar = -1;
+        return true;
     }
 
     private struct BlockState
