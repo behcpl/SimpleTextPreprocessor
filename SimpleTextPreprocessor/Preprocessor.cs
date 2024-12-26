@@ -194,7 +194,7 @@ public class Preprocessor
                     report?.Error(fileIds[^1], lineNumber, 0, $"Can't have multiple `{_directiveChar}{_DIRECTIVE_ELSE}` directives!");
                     return false;
                 }
-                
+
                 bool valid = true;
                 if (!CheckForEmpty(line, dirEnd, out int nonWhiteChar))
                 {
@@ -226,13 +226,13 @@ public class Preprocessor
                     report?.Error(fileIds[^1], lineNumber, nonWhiteChar, $"Unexpected character after `{_directiveChar}{_DIRECTIVE_END}`!");
                     valid = false;
                 }
-  
+
                 sectionState.RemoveAt(sectionState.Count - 1);
                 return valid;
             }
             case _DIRECTIVE_INCLUDE:
             {
-                return HandleInclude(fileIds, symbols, line, lineNumber, writer, report);
+                return HandleInclude(fileIds, symbols, line, lineNumber, dirEnd, writer, report);
             }
             case _DIRECTIVE_DEFINE:
             {
@@ -254,12 +254,22 @@ public class Preprocessor
         }
     }
 
-    private bool HandleInclude(List<string> fileIds, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report)
+    private bool HandleInclude(List<string> fileIds, Dictionary<string, string?> symbols, string line, int lineNumber, int lineOffset, TextWriter writer, IReport? report)
     {
-        string parameter = line.Substring(_DIRECTIVE_INCLUDE.Length + 1);
+        if (!FindExpression(line, lineOffset, out int paramStart, out int paramEnd))
+        {
+            report?.Error(fileIds[^1], lineNumber, line.Length, $"No parameter found after `{_directiveChar}{_DIRECTIVE_INCLUDE}` directive!");
+            return false;
+        }
 
-        // TODO: remap report line/column here
-        if (!_includeResolver.TryCreateReader(fileIds[^1], parameter, out string? newFileId, out TextReader? reader, report))
+        if (report != null)
+        {
+            report.CurrentFileId = fileIds[^1];
+            report.CurrentLine = lineNumber;
+            report.CurrentColumn = paramStart;
+        }
+
+        if (!_includeResolver.TryCreateReader(fileIds[^1], line.Substring(paramStart, paramEnd - paramStart), out string? newFileId, out TextReader? reader, report))
             return false;
 
         Debug.Assert(newFileId != null);
@@ -354,7 +364,7 @@ public class Preprocessor
         {
             if (char.IsWhiteSpace(line[i]))
                 continue;
-            
+
             nonWhiteChar = i;
             return false;
         }

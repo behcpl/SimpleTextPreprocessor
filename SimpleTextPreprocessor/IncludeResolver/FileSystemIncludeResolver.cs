@@ -17,7 +17,7 @@ public class FileSystemIncludeResolver : IIncludeResolver
     
     public bool TryCreateReader(string sourceFileId, string includeParameter, out string? newFileId, out TextReader? reader, IReport? report)
     {
-        string strippedName = includeParameter.TrimStart().TrimStart('"').TrimEnd().TrimEnd('"');
+        string strippedName = includeParameter.TrimStart('"').TrimEnd('"');
         
         // TODO: check for matching "" or <> (abandon <> variant?)
         // TODO: check for invalid chars in `strippedName`

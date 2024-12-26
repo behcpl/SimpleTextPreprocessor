@@ -14,7 +14,7 @@ public class InMemoryIncludeResolver : IIncludeResolver
 
     public bool TryCreateReader(string sourceFileId, string includeParameter, out string? newFileId, out TextReader? reader, IReport? report)
     {
-        string strippedName = includeParameter.TrimStart().TrimStart('"').TrimEnd().TrimEnd('"');
+        string strippedName = includeParameter.TrimStart('"').TrimEnd('"');
 
         if (Entries.TryGetValue(strippedName, out string? content))
         {

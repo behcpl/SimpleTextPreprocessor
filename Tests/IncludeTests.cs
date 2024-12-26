@@ -128,5 +128,38 @@ public class IncludeTests
 
         Assert.That(ret, Is.False);
         Assert.That(report.Entries, Has.Count.EqualTo(1));
+        Assert.That(report.Entries[0].FileId, Is.EqualTo("c"));
+    }
+
+    [Test]
+    public void Include_fail_without_parameter()
+    {
+        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+
+
+        // disable formatter to keep 2 spaces after include
+        // @formatter:off
+        const string sourceString = """
+                                    first line
+                                    second line
+                                    #include  
+                                    third line
+                                    fourth line
+                                    """;
+        // @formatter:on
+
+        using TextReader source = new StringReader(sourceString);
+
+        StringBuilder sb = new StringBuilder();
+        using TextWriter result = new StringWriter(sb);
+        result.NewLine = "\r\n";
+
+        TestReport report = new TestReport();
+        bool ret = preprocessor.Process(source, result, report);
+
+        Assert.That(ret, Is.False);
+        Assert.That(report.Entries, Has.Count.EqualTo(1));
+        Assert.That(report.Entries[0].Line, Is.EqualTo(2));
+        Assert.That(report.Entries[0].Column, Is.EqualTo(10));
     }
 }
