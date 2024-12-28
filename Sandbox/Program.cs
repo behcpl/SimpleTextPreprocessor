@@ -12,7 +12,7 @@ class Program
     static void Main(string[] args)
     {
         FileSystemIncludeResolver includeResolver = new FileSystemIncludeResolver();
-        Preprocessor preprocessor = new Preprocessor(includeResolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         const string sourceName = "./ExampleData/example.txt";
         using TextReader source = new StreamReader(sourceName);

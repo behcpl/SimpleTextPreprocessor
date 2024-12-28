@@ -87,7 +87,7 @@ public class DefineTests
             #endif
             """;
 
-        Preprocessor preprocessor = new Preprocessor(includeResolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
         preprocessor.Define("SYSTEM_DEFINED");
         using TextReader source = new StringReader(sourceText);
 
@@ -139,7 +139,7 @@ public class DefineTests
             #undef SYSTEM_DEFINED
             """;
 
-        Preprocessor preprocessor = new Preprocessor(includeResolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
         preprocessor.Define("SYSTEM_DEFINED");
         using TextReader source = new StringReader(sourceText);
 
@@ -156,7 +156,7 @@ public class DefineTests
     [Test]
     public void Define_fails_without_symbol_name()
     {
-        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         // disable formatter to keep 2 spaces after define
         // @formatter:off
@@ -188,7 +188,7 @@ public class DefineTests
     [Test]
     public void Undef_fails_without_symbol_name()
     {
-        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         // disable formatter to keep 2 spaces after undef
         // @formatter:off
@@ -220,7 +220,7 @@ public class DefineTests
     [Test]
     public void Undef_fails_with_characters_after_symbol_name()
     {
-        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         // disable formatter to keep 2 spaces after undef
         // @formatter:off
@@ -278,7 +278,7 @@ public class DefineTests
             #undef SYSTEM_DEFINED
             """;
 
-        Preprocessor preprocessor = new Preprocessor(includeResolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
         preprocessor.Define("SYSTEM_DEFINED");
 
         using TextReader source1 = new StringReader(sourceText);

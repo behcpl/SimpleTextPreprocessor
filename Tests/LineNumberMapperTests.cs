@@ -13,7 +13,7 @@ public class LineNumberMapperTests
     [Test]
     public void Mapping_should_consider_conditional_blocks()
     {
-        Preprocessor preprocessor = new Preprocessor(new NullIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new NullIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
         preprocessor.Ignore("version");
 
         const string sourceString =
@@ -61,7 +61,7 @@ public class LineNumberMapperTests
             b 1
             """;
 
-        Preprocessor preprocessor = new Preprocessor(includeResolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         const string sourceString =
             """

@@ -35,7 +35,7 @@ public class Preprocessor
         _symbols = new Dictionary<string, string?>();
     }
 
-    public Preprocessor() : this(new NullIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default) { }
+    public Preprocessor() : this(new NullIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default) { }
 
     public void Ignore(string directive)
     {

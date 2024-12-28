@@ -48,7 +48,7 @@ public class IncludeTests
     {
         InMemoryIncludeResolver resolver = new InMemoryIncludeResolver();
         resolver.Entries.Add("input", _INCLUDE);
-        Preprocessor preprocessor = new Preprocessor(resolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(resolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         using TextReader source = new StringReader(_SOURCE);
 
@@ -65,7 +65,7 @@ public class IncludeTests
     [Test]
     public void Include_fails_with_null_resolver()
     {
-        Preprocessor preprocessor = new Preprocessor(new NullIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new NullIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         using TextReader source = new StringReader(_SOURCE);
 
@@ -84,7 +84,7 @@ public class IncludeTests
     [Test]
     public void Include_skips_with_empty_resolver()
     {
-        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         using TextReader source = new StringReader(_SOURCE);
 
@@ -113,7 +113,7 @@ public class IncludeTests
                                   #include "a"
                                   """);
 
-        Preprocessor preprocessor = new Preprocessor(resolver, new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(resolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         using TextReader source = new StringReader("""
                                                    #include "a"
@@ -134,7 +134,7 @@ public class IncludeTests
     [Test]
     public void Include_fails_without_parameter()
     {
-        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DummyExpressionSolver(), PreprocessorOptions.Default);
+        Preprocessor preprocessor = new Preprocessor(new EmptyIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
 
         // disable formatter to keep 2 spaces after include
         // @formatter:off
