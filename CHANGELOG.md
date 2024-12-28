@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+### [1.0.0] 2024-12-28
+* Break: some of API has changed
+* Added: line number mapping
+* Added: expression solver
+
 ### [0.2.0] 2024-12-26
 
 * Break: most of API has changed

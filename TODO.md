@@ -1,51 +1,13 @@
 # TODO
 
-1. ~~Parse string / file line by line~~
-2. ~~Tokenize everything that starts with #~~ 
-   * ~~allow exceptions, i.e. keep #pragma / #version etc~~
-3. #include resolver
-   * ~~abstracted by interface~~
-   * support for error line number remapping 
-4. Conditional blocks
-   * ~~#if, #endif~~
-   * ~~nested blocks~~
-   * ~~#else, #elif support~~
-5. ~~Use ReadOnlySpan<char>~~ <- decided not to use it
-6. Handle errors
-   * misconfiguration
-   * content errors <- mostly done?
-     * handle potential exceptions
-7. Expression solver
-   * compare int values
-   * boolean logic
-   * brackets (and operator precedence)
+(In no particular order)
+* Multi-target package (.NET 5, .netstandard2, etc)
+* Documentation in MD files
+* Documentation comments for all public methods
 
 
-## Expected features
+## Discarded or postponed ideas
 
-### Conditional blocks
-
-- `#if expr` - starts new block
-- `#endif` - closes block
-- `#else` - alternative block
-- `#elif expr` - combined else/if for chaining
-
-#### Expression
-
-- `true`
-- `false`
-- number literal (int: `0`, `1`, `-42`, `0x01`)
-- symbol name
-  - default value: `null`
-  - no symbol means undefined
-  - using undefined symbol in compare node always returns false
-
-Nodes:
-- compare: `>`, `<`, `>=`, `<=`, `==`, `!=`
-- logic: `&&`, `||`, `!`
-
-### Include directive
-
-- Inserts lines of text in place of directive
-- Everything is parsed with same rules
-- Defined symbols work across include directive
+(Mainly due to effort not justifying potential gains)
+* Make it (near) zero-alloc, using spans everywhere
+* Utf8 variant

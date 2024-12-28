@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace SimpleTextPreprocessor.IncludeResolver;
 
@@ -35,9 +36,18 @@ public class FileSystemIncludeResolver : IIncludeResolver
             return false;
         }
         
-        // TODO: handle IO exception?
-        newFileId = newPath;
-        reader = new StreamReader(newPath);
+        try
+        {
+            newFileId = newPath;
+            reader = new StreamReader(newPath);
+        }
+        catch (Exception e)
+        {
+            report?.Exception(sourceFileId, report.CurrentLine, report.CurrentColumn, e);
+            newFileId = null;
+            reader = null;
+            return false;
+        }
         return true;
     }
 }

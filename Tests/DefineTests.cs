@@ -41,7 +41,7 @@ public class DefineTests
             """;
 
         Preprocessor preprocessor = new Preprocessor();
-        preprocessor.Define("SYSTEM_DEFINED");
+        preprocessor.AddSymbol("SYSTEM_DEFINED");
         using TextReader source = new StringReader(sourceText);
 
         StringBuilder sb = new StringBuilder();
@@ -88,7 +88,7 @@ public class DefineTests
             """;
 
         Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
-        preprocessor.Define("SYSTEM_DEFINED");
+        preprocessor.AddSymbol("SYSTEM_DEFINED");
         using TextReader source = new StringReader(sourceText);
 
         StringBuilder sb = new StringBuilder();
@@ -140,7 +140,7 @@ public class DefineTests
             """;
 
         Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
-        preprocessor.Define("SYSTEM_DEFINED");
+        preprocessor.AddSymbol("SYSTEM_DEFINED");
         using TextReader source = new StringReader(sourceText);
 
         StringBuilder sb = new StringBuilder();
@@ -279,7 +279,7 @@ public class DefineTests
             """;
 
         Preprocessor preprocessor = new Preprocessor(includeResolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
-        preprocessor.Define("SYSTEM_DEFINED");
+        preprocessor.AddSymbol("SYSTEM_DEFINED");
 
         using TextReader source1 = new StringReader(sourceText);
 

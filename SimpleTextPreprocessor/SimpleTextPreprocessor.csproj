@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>0.2.0</Version>
+        <Version>1.0.0</Version>
         <Authors>Bartosz Czuba</Authors>
         <Copyright>BEHC 2024</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -14,6 +13,8 @@
         <PackageId>BEHC.SimpleTextPreprocessor</PackageId>
         <Description>Text preprocessor like one with C/C++ but with basic expression support.</Description>
         <PackageTags>text, processing</PackageTags>
+        <LangVersion>12</LangVersion>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>

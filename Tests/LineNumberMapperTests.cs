@@ -14,7 +14,7 @@ public class LineNumberMapperTests
     public void Mapping_should_consider_conditional_blocks()
     {
         Preprocessor preprocessor = new Preprocessor(new NullIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default);
-        preprocessor.Ignore("version");
+        preprocessor.AddToIgnored("version");
 
         const string sourceString =
             """

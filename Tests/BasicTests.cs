@@ -48,7 +48,7 @@ public class BasicTests
     public void Handle_basic_cases(string sourceText, string expectedText)
     {
         Preprocessor preprocessor = new Preprocessor();
-        preprocessor.Ignore("version");
+        preprocessor.AddToIgnored("version");
 
         using TextReader source = new StringReader(sourceText);
 

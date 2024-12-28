@@ -37,17 +37,22 @@ public class Preprocessor
 
     public Preprocessor() : this(new NullIncludeResolver(), new DefaultExpressionSolver(), PreprocessorOptions.Default) { }
 
-    public void Ignore(string directive)
+    public void AddToIgnored(string directive)
     {
         _ignored.Add(directive);
+    } 
+    
+    public void RemoveFromIgnored(string directive)
+    {
+        _ignored.Remove(directive);
     }
 
-    public void Define(string symbol, string? value = null)
+    public void AddSymbol(string symbol, string? value = null)
     {
         _symbols[symbol] = value;
     }
 
-    public void Undefine(string symbol)
+    public void RemoveSymbol(string symbol)
     {
         _symbols.Remove(symbol);
     }
