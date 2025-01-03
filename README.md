@@ -1,5 +1,8 @@
 # SimpleTextPreprocessor
 
+[![Nuget](https://img.shields.io/nuget/v/BEHC.SimpleTextPreprocessor)](https://www.nuget.org/packages/BEHC.SimpleTextPreprocessor/)
+[![PowerPlayZipper CI build (main)](https://github.com/behcpl/SimpleTextPreprocessor/actions/workflows/main.yml/badge.svg)](https://github.com/behcpl/SimpleTextPreprocessor/actions)
+
 Simple text preprocessor that supports basic directives like `#include` or conditional blocks (`#if` / `#endif`).
 Not as powerful as C/C++ preprocessor, but slightly more robust than C# preprocessor directives.
 
