@@ -228,9 +228,60 @@ public class ConditionalBlockTests
             """).SetName("Use else block when no conditions were met");
     }
 
+    private static IEnumerable<TestCaseData> HandleOtherDirectivesCases()
+    {
+        yield return new TestCaseData(
+            """
+            start line
+            #if true
+            #define DEF1
+            #else
+            #define DEF2
+            #endif
+            #if DEF1
+            def1 line
+            #endif
+            #if DEF2
+            def2 line
+            #endif
+            end line
+            """,
+            """
+            start line
+            def1 line
+            end line
+
+            """).SetName("Ignore #define when skipping block");
+        yield return new TestCaseData(
+            """
+            start line
+            #define DEF1
+            #define DEF2
+            #if true
+            #undef DEF1
+            #else
+            #undef DEF2
+            #endif
+            #if DEF1
+            def1 line
+            #endif
+            #if DEF2
+            def2 line
+            #endif
+            end line
+            """,
+            """
+            start line
+            def2 line
+            end line
+
+            """).SetName("Ignore #undef when skipping block");
+    }
+
     [TestCaseSource(nameof(SimpleConditionCases))]
     [TestCaseSource(nameof(ElseConditionCases))]
     [TestCaseSource(nameof(ElifConditionCases))]
+    [TestCaseSource(nameof(HandleOtherDirectivesCases))]
     public void Handle_conditional_blocks(string sourceText, string expectedText)
     {
         Preprocessor preprocessor = new Preprocessor();

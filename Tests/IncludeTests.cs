@@ -42,7 +42,18 @@ public class IncludeTests
         fourth line
 
         """;
-
+    
+    private const string _SOURCE_IF_ELSE =
+        """
+        first line
+        second line
+        #if false
+        #include "input"
+        #endif
+        third line
+        fourth line
+        """;
+    
     [Test]
     public void Include_replaced_with_text()
     {
@@ -60,6 +71,25 @@ public class IncludeTests
 
         Assert.That(ret, Is.True);
         Assert.That(sb.ToString(), Is.EqualTo(_EXPECTED));
+    }  
+    
+    [Test]
+    public void Include_ignored_when_condition_block_is_skipped()
+    {
+        InMemoryIncludeResolver resolver = new InMemoryIncludeResolver();
+        resolver.Entries.Add("input", _INCLUDE);
+        Preprocessor preprocessor = new Preprocessor(resolver, new DefaultExpressionSolver(), PreprocessorOptions.Default);
+
+        using TextReader source = new StringReader(_SOURCE_IF_ELSE);
+
+        StringBuilder sb = new StringBuilder();
+        using TextWriter result = new StringWriter(sb);
+        result.NewLine = "\r\n";
+
+        bool ret = preprocessor.Process(source, result);
+
+        Assert.That(ret, Is.True);
+        Assert.That(sb.ToString(), Is.EqualTo(_EXPECTED_SKIPPED));
     }
 
     [Test]

@@ -278,11 +278,19 @@ public class Preprocessor
                 return valid;
             }
             case _DIRECTIVE_INCLUDE:
-            {
+            {    
+                bool skipContent = sectionState.Count > 0 && sectionState[^1].SkipContent;
+                if (skipContent)
+                    return true;
+                
                 return HandleInclude(fileIds, symbols, line, lineNumber, dirEnd, writer, report, lineNumberMapper);
             }
             case _DIRECTIVE_DEFINE:
-            {
+            {   
+                bool skipContent = sectionState.Count > 0 && sectionState[^1].SkipContent;
+                if (skipContent)
+                    return true;
+
                 if (!FindNonWhiteSeparatedSymbol(line, dirEnd, out int symStart, out int symEnd))
                 {
                     report?.Error(fileIds[^1], lineNumber, line.Length, $"No symbol name found after `{_directiveChar}{_DIRECTIVE_DEFINE}` directive!");
@@ -311,6 +319,10 @@ public class Preprocessor
             }
             case _DIRECTIVE_UNDEFINE:
             {
+                bool skipContent = sectionState.Count > 0 && sectionState[^1].SkipContent;
+                if (skipContent)
+                    return true;
+                
                 if (!FindNonWhiteSeparatedSymbol(line, dirEnd, out int symStart, out int symEnd))
                 {
                     report?.Error(fileIds[^1], lineNumber, line.Length, $"No symbol name found after `{_directiveChar}{_DIRECTIVE_UNDEFINE}` directive!");
