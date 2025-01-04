@@ -3,14 +3,20 @@ using System.IO;
 
 namespace SimpleTextPreprocessor.IncludeResolver;
 
+/// <summary>
+/// This implementation will try to resolve <c>#include "path"</c> using files on disk.
+/// </summary>
+/// <remarks>
+/// Value returned from <c>GetFileId(path_to_root)</c> must be used as <c>fileId</c> parameter when calling <c>Process(...)</c>.
+/// </remarks>
 public class FileSystemIncludeResolver : IIncludeResolver
 {  
     /// <summary>
     /// Translate any path (local or absolute) into <c>fileId</c> compatible with this resolver.
-    /// This value can be passed as <c>string fileId</c> when calling <c>Preprocessor.Process()</c>
+    /// This value must be passed as <c>string fileId</c> when calling <c>Preprocessor.Process(...)</c>
     /// </summary>
     /// <param name="path">Local or absolute path of file that is processed</param>
-    /// <returns>fileId</returns>
+    /// <returns>Unique ID for this file</returns>
     public string GetFileId(string path)
     {
         return Path.GetFullPath(path);

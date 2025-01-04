@@ -2,6 +2,9 @@
 
 namespace SimpleTextPreprocessor;
 
+/// <summary>
+/// Container for storing line number mapping
+/// </summary>
 public class LineNumberMapper
 {
     public int EntriesCount => _entries.Count;

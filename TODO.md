@@ -3,7 +3,7 @@
 (In no particular order)
 * Multi-target package (.NET 5, .netstandard2, etc)
 * Documentation in MD files
-* Documentation comments for all public methods
+* ~~Documentation comments for all public methods~~
 
 
 ## Discarded or postponed ideas

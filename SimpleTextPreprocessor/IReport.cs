@@ -2,6 +2,9 @@
 
 namespace SimpleTextPreprocessor;
 
+/// <summary>
+/// Implement for custom report handling.
+/// </summary>
 public interface IReport
 {
     string CurrentFileId { get; set; }

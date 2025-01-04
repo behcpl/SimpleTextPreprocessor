@@ -2,7 +2,10 @@
 
 namespace SimpleTextPreprocessor.IncludeResolver;
 
-// TODO: should this always succeed but with empty data?
+/// <summary>
+/// This implementation will always fail string when resolving <c>#include</c>.
+/// Use this if you don't want any support for <c>#include</c> directive.
+/// </summary>
 public class NullIncludeResolver : IIncludeResolver
 {
     public bool TryCreateReader(string sourceFileId, string includeParameter, out string? newFileId, out TextReader? reader, IReport? report)

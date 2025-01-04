@@ -12,7 +12,7 @@
         <Company>BEHC</Company>
         <PackageId>BEHC.SimpleTextPreprocessor</PackageId>
         <Description>Text preprocessor like one with C/C++ but with basic expression support.</Description>
-        <PackageTags>text, processing</PackageTags>
+        <PackageTags>text, processing, preprocessor, include, define</PackageTags>
         <LangVersion>12</LangVersion>
         <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>

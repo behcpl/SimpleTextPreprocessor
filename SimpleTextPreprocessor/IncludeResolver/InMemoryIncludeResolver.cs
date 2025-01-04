@@ -3,6 +3,12 @@ using System.IO;
 
 namespace SimpleTextPreprocessor.IncludeResolver;
 
+/// <summary>
+/// This implementation will try to resolve <c>#include "key"</c> using in-memory dictionary.
+/// </summary>
+/// <remarks>
+/// <c>Entries</c> must be populated before use.
+/// </remarks>
 public class InMemoryIncludeResolver : IIncludeResolver
 {
     public readonly Dictionary<string, string> Entries;
