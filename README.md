@@ -1,5 +1,6 @@
 # SimpleTextPreprocessor
 
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Nuget](https://img.shields.io/nuget/v/BEHC.SimpleTextPreprocessor)](https://www.nuget.org/packages/BEHC.SimpleTextPreprocessor/)
 [![PowerPlayZipper CI build (main)](https://github.com/behcpl/SimpleTextPreprocessor/actions/workflows/main.yml/badge.svg)](https://github.com/behcpl/SimpleTextPreprocessor/actions)
 

@@ -110,16 +110,16 @@ public class Preprocessor
     }
 
     private bool ProcessLine(out bool outputLine, List<string> fileIds, List<BlockState> sectionState, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report, LineNumberMapper? lineNumberMapper)
-    {
+    {   
+        outputLine = sectionState.Count == 0 || !sectionState[^1].SkipContent;
+
         // optimization / simplicity: directive char must be first, no white chars allowed before
         if (line.Length <= 1 || line[0] != _directiveChar)
-        {
-            outputLine = sectionState.Count == 0 || !sectionState[^1].SkipContent;
             return true;
-        }
 
         if (!FindDirective(line, out int dirStart, out int dirEnd))
         {
+            // TODO: should this be error? unknown directives can be silently skipped
             report?.Error(fileIds[^1], lineNumber, 1, $"No directive found after `{_directiveChar}` character!");
             outputLine = false;
             return false;
@@ -128,10 +128,7 @@ public class Preprocessor
         ReadOnlySpan<char> directive = line.AsSpan(dirStart, dirEnd - dirStart);
         // TODO: convert _ignored to use ReadOnlyMemory and add custom comparer
         if (_ignored.Contains(directive.ToString()))
-        {
-            outputLine = true;
             return true;
-        }
 
         outputLine = false;
         switch (directive)

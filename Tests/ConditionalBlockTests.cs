@@ -276,6 +276,22 @@ public class ConditionalBlockTests
             end line
 
             """).SetName("Ignore #undef when skipping block");
+        yield return new TestCaseData(
+            """
+            start line
+            #if true
+            #version 1
+            #else
+            #version 2
+            #endif
+            end line
+            """,
+            """
+            start line
+            #version 1
+            end line
+
+            """).SetName("Skip ignored directives when skipping block");
     }
 
     [TestCaseSource(nameof(SimpleConditionCases))]
@@ -285,6 +301,7 @@ public class ConditionalBlockTests
     public void Handle_conditional_blocks(string sourceText, string expectedText)
     {
         Preprocessor preprocessor = new Preprocessor();
+        preprocessor.AddToIgnored("version");
         using TextReader source = new StringReader(sourceText);
 
         StringBuilder sb = new StringBuilder();
@@ -296,7 +313,6 @@ public class ConditionalBlockTests
         Assert.That(ret, Is.True);
         Assert.That(sb.ToString(), Is.EqualTo(expectedText));
     }
-
 
     // TODO: test #if false
     // TODO: test nested ifs
