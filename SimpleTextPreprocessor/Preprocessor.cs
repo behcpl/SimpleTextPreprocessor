@@ -24,6 +24,8 @@ public class Preprocessor
     private readonly Dictionary<string, string?> _symbols;
     private readonly char _directiveChar;
     private readonly bool _breakOnFirstError;
+    private readonly bool _errorOnUnknownDirective;
+    private readonly bool _errorOnMissingDirective;
 
     public Preprocessor(IIncludeResolver includeResolver, IExpressionSolver expressionSolver, PreprocessorOptions options)
     {
@@ -31,6 +33,8 @@ public class Preprocessor
         _expressionSolver = expressionSolver;
         _directiveChar = options.DirectiveChar;
         _breakOnFirstError = options.BreakOnFirstError;
+        _errorOnUnknownDirective = options.ErrorOnUnknownDirective;
+        _errorOnMissingDirective = options.ErrorOnMissingDirective;
         _ignored = new HashSet<string>();
         _symbols = new Dictionary<string, string?>();
     }
@@ -40,8 +44,8 @@ public class Preprocessor
     public void AddToIgnored(string directive)
     {
         _ignored.Add(directive);
-    } 
-    
+    }
+
     public void RemoveFromIgnored(string directive)
     {
         _ignored.Remove(directive);
@@ -110,18 +114,20 @@ public class Preprocessor
     }
 
     private bool ProcessLine(out bool outputLine, List<string> fileIds, List<BlockState> sectionState, Dictionary<string, string?> symbols, string line, int lineNumber, TextWriter writer, IReport? report, LineNumberMapper? lineNumberMapper)
-    {   
+    {
         outputLine = sectionState.Count == 0 || !sectionState[^1].SkipContent;
 
         // optimization / simplicity: directive char must be first, no white chars allowed before
-        if (line.Length <= 1 || line[0] != _directiveChar)
+        if (line.Length < 1 || line[0] != _directiveChar)
             return true;
 
         if (!FindDirective(line, out int dirStart, out int dirEnd))
         {
-            // TODO: should this be error? unknown directives can be silently skipped
-            report?.Error(fileIds[^1], lineNumber, 1, $"No directive found after `{_directiveChar}` character!");
             outputLine = false;
+            if (!_errorOnMissingDirective)
+                return true;
+            
+            report?.Error(fileIds[^1], lineNumber, 1, $"No directive found after `{_directiveChar}` character!");
             return false;
         }
 
@@ -275,15 +281,15 @@ public class Preprocessor
                 return valid;
             }
             case _DIRECTIVE_INCLUDE:
-            {    
+            {
                 bool skipContent = sectionState.Count > 0 && sectionState[^1].SkipContent;
                 if (skipContent)
                     return true;
-                
+
                 return HandleInclude(fileIds, symbols, line, lineNumber, dirEnd, writer, report, lineNumberMapper);
             }
             case _DIRECTIVE_DEFINE:
-            {   
+            {
                 bool skipContent = sectionState.Count > 0 && sectionState[^1].SkipContent;
                 if (skipContent)
                     return true;
@@ -319,7 +325,7 @@ public class Preprocessor
                 bool skipContent = sectionState.Count > 0 && sectionState[^1].SkipContent;
                 if (skipContent)
                     return true;
-                
+
                 if (!FindNonWhiteSeparatedSymbol(line, dirEnd, out int symStart, out int symEnd))
                 {
                     report?.Error(fileIds[^1], lineNumber, line.Length, $"No symbol name found after `{_directiveChar}{_DIRECTIVE_UNDEFINE}` directive!");
@@ -340,8 +346,11 @@ public class Preprocessor
             }
             default:
             {
-                // TODO: or emit error, depends on options
-                return true;
+                if (!_errorOnUnknownDirective)
+                    return true;
+
+                report?.Error(fileIds[^1], lineNumber, dirStart, $"Unknown directive `{_directiveChar}{directive}` found!");
+                return false;
             }
         }
     }

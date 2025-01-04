@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### [1.0.1] 2025-01-03
 * Fixed: directives not respecting conditional blocks
+* Added: implement error handling options
 
 ### [1.0.0] 2024-12-28
 * Break: some of API has changed
